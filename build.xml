@@ -1,0 +1,108 @@
+<project name="JavaDemoApp" default="deploy" basedir=".">
+
+	<description>
+                This build file builds and packages the Cloud Java Sample
+                webapp into a war file.
+	</description>
+
+    <property file="${user.home}/${ant.project.name}.build.properties"/>
+    <property file="${user.home}/build.properties"/>
+	<property file="build.properties"/>
+
+	<tstamp>
+		   <format property="timestamp.isoformat"
+		           pattern="yyyy-MM-dd'T'HH:mm:ss" />
+	</tstamp>
+
+	<target name="package" depends="init,compile,resources">
+          <war destfile="${war.dir}/${ant.project.name}.war"
+          	   webxml="${web-inf.dir}/web.xml" duplicate="preserve">
+            <fileset dir="${webcontent.dir}">
+            	<exclude name="**/?svn/**"/> 
+           		<exclude name="WEB-INF/**"/> 
+ 	    	</fileset>
+            <lib dir="${jar.dir}">
+                  <include name="**/*.jar"/>
+            </lib>
+            <lib dir="${web-inf.dir}/lib">
+    		      <include name="**/*.jar"/>
+          	</lib>
+          	<classes dir="${classes.dir}/${ant.project.name}" />
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Built-On" value="${timestamp.isoformat}"/>
+                <attribute name="Subversion-Revision" value="${svn.revision}"/>
+                <attribute name="Engine-Version" value="${engine.version}" />
+           </manifest>
+          </war>
+	</target>
+    <target name="resources">
+        <copy todir="${classes.dir}/${ant.project.name}">
+            <fileset dir="${src.dir}">
+                <include name="**/*.xml" />
+                <include name="**/*.properties" />
+                <include name="**/*.conf" />
+                <exclude name="SCORMEngineSettings.properties" />
+            </fileset>
+        </copy>
+    </target>
+	
+	<!-- It is sometimes useful to get a jar from the helper code distributed with NoddyLms -->
+	<target name="packagejar" depends="compile,resources">
+          <mkdir dir="${jar.dir}"/>
+          <jar destfile="${jar.dir}/${ant.project.name}.jar">
+	    	<fileset dir="${classes.dir}/${ant.project.name}">
+	      		<include name="**/*.class"/>
+	    	</fileset>
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Built-On" value="${timestamp.isoformat}"/>
+           </manifest>
+         </jar>
+	</target>
+
+	<target name="clean-package" depends="clean,package">
+	</target>
+
+	<target name="compile" depends="init">
+		<echo message="Compiling Source files from ${basedir}/${src.dir}" />
+		<javac srcdir="${src.dir}/"
+			   includes="**/*.java"
+			   excludes=""
+			   destdir="${classes.dir}/${ant.project.name}"
+			   fork="true"
+			   deprecation="false"
+			   debug="true"
+			   memoryMaximumSize="512m"
+			   nowarn="true"
+			   target="${java.target.vm}">
+		  <classpath>
+		    <fileset dir="${web-inf.dir}/lib">
+		      <include name="**/*.jar"/>
+		    </fileset>
+		    <fileset dir="${jar.dir}">
+		      <include name="**/*.jar"/>
+		    </fileset>
+		  </classpath>
+		</javac>
+	</target>
+	
+	<target name="init" depends="">
+		<mkdir dir="${classes.dir}/${ant.project.name}"/>
+        <mkdir dir="${war.dir}"/>
+        <mkdir dir="${jar.dir}"/>
+	</target>
+
+	<target name="clean" depends="">
+		<delete failonerror="false" dir="${build.dir}" />
+	</target>
+	
+	<target name="deploy" depends="package">
+		<copy file="${war.dir}/${ant.project.name}.war" todir="${export.webapps.dir}" />
+	</target>
+
+	<target name="dumpProperties" description="output all set properties, a useful sanity check">
+		   <echoproperties/>
+	</target>
+
+</project>
