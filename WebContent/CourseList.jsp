@@ -47,6 +47,13 @@ String reportUrl = repsvc.GetReportUrl(repAuth,reportageUrl);
 			<td><a href="CourseProperties.jsp?courseid=<%= cd.getCourseId() %>">Properties</a></td>
 			<td><a href="PreviewCourse.jsp?courseid=<%= cd.getCourseId() %>">Preview</a></td>
 			<td><a href="DeleteCourse.jsp?courseid=<%= cd.getCourseId() %>">Delete</a></td>
+			<%
+			if (csvc.Exists(cd.getCourseId())){
+			%><td>EXISTS</td> <%	
+			} else {
+			%><td>Nope</td> <%
+			}%>
+			
 			</tr>
 		
 <% } %>
