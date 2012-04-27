@@ -31,26 +31,22 @@
     pageEncoding="ISO-8859-1"%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <jsp:directive.page import="java.util.*" />
+<jsp:directive.page import="org.w3c.dom.*" />
+
 <%@ page import="com.rusticisoftware.hostedengine.client.*" %>
-<%@ page import="com.rusticisoftware.hostedengine.client.datatypes.CourseData" %>
+<%@ page import="com.rusticisoftware.hostedengine.client.datatypes.InvitationInfo" %>
 <%@ page import="com.rusticisoftware.hostedengine.client.datatypes.Enums" %>
 <%@ page import="com.rusticisoftware.cloudjavasample.*" %>
 <%
+String courseid = request.getParameter("courseid"); 
 
 ScormEngineService cs = SampleConfig.GetScormEngineService();
-CourseService csvc = cs.getCourseService();
-UploadService usvc = cs.getUploadService();
+InvitationService isvc = cs.getInvitationService();
 
-List<CourseData> courseList = csvc.GetCourseList();
-
-String redirectUrl = request.getRequestURL().toString().replace("CourseList","FinishUpload");
-String uploadUrl = usvc.GetUploadUrl(redirectUrl);
+List<InvitationInfo> invList = isvc.getInvitationList(null,courseid);
 
 
-ReportingService repsvc = cs.getReportingService();
-String repAuth = repsvc.GetReportageAuth(Enums.ReportageNavPermission.FREENAV,true);
-String reportageUrl = cs.getScormEngineServiceUrl().replace("EngineWebServices","") + "Reportage/reportage.php?appId=" + cs.getAppId();
-String reportUrl = repsvc.GetReportUrl(repAuth,reportageUrl);
+
 
 %>
 
@@ -58,46 +54,55 @@ String reportUrl = repsvc.GetReportUrl(repAuth,reportageUrl);
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<title>Cloud Course List</title>
+<title>Course Invitation List</title>
 <style>
 	td {padding:1px 5px;}
 
 </style>
 </head>
 <body>
-	<h2>Your Cloud Course List</h2>
+	<a href="CourseList.jsp">Back to course list.</a>
+	<h2>Your Course Invitations</h2>
 
 	<table>
-		<tr><td>Title</td><td>Registrations</td><td></td><td></td><td></td></tr>
+		<tr><td>ID</td><td>subject</td><td>status</td><td>is public</td><td>allow registrations</td><td>allow launches</td></tr>
 		
-<%		for (CourseData cd: courseList){ %>
+<%		for (InvitationInfo inv: invList){ 
+			String status = isvc.getInvitationStatus(inv.get_id());
+	%>
 			
 			<tr>
-			<td><%= cd.getTitle() %></td>
-			<td><a href="CourseRegistrations.jsp?courseid=<%= cd.getCourseId() %>"><%= cd.getNumberOfRegistrations() %></a></td>
-			<td><a href="CourseInvitations.jsp?courseid=<%= cd.getCourseId() %>">Invitations</a></td>
-			<td><a href="CourseProperties.jsp?courseid=<%= cd.getCourseId() %>">Properties</a></td>
-			<td><a href="PreviewCourse.jsp?courseid=<%= cd.getCourseId() %>">Preview</a></td>
-			<td><a href="DeleteCourse.jsp?courseid=<%= cd.getCourseId() %>">Delete</a></td>
-			<%
-			if (csvc.Exists(cd.getCourseId())){
-			%><td>EXISTS</td> <%	
-			} else {
-			%><td>Nope</td> <%
-			}%>
+			<td><a href="InvitationInfo.jsp?invitationid=<%= inv.get_id() %>"><%= inv.get_id() %></a></td>
+			<td><%= inv.get_subject() %></td>
+			<td><%= status %></td>
+			<td><%= inv.is_Public() %></td>
+			<% if (inv.is_Public())  { %>		
+				<td><a href="InvitationChangeStatus.jsp?invitationid=<%= inv.get_id() %>&courseid=<%= inv.get_courseId() %>&enable=<%= inv.is_allowLaunch() %>&open=<%= !inv.is_allowNewRegistrations() %>"><%= inv.is_allowNewRegistrations() %></a></td>
+			
+			<% } else { %>
+				<td>(not public)</td>
+			<% }  %>
+			<td><a href="InvitationChangeStatus.jsp?invitationid=<%= inv.get_id() %>&courseid=<%= inv.get_courseId() %>&enable=<%= !inv.is_allowLaunch() %>&open=<%= inv.is_allowNewRegistrations() %>"><%= inv.is_allowLaunch() %></a></td>
 			
 			</tr>
 		
 <% } %>
 	</table>
 	
-	<h3>Upload a course:</h3>
-	<form action="<%= uploadUrl %>" method="post" enctype="multipart/form-data">
-	<h4>Select Your Zip Package</h4>
-		<input type="file" name="filedata" size="40" />
-		<input type="submit" value="Import This Course"/>
+	<h3>Add an Invitation:</h3>
+	<form action="CreateInvitation.jsp" method="GET">
+		<input type="hidden" name="courseid" value="<%= courseid %>"/>
+		<h3>Create New Registration</h3>
+		Sender's Email: <input type="text" name="creator" /><br/>
+		<input type="checkbox" name="public" /> Public Invite<br/>
+		<input type="checkbox" name="async" /> Send Async<br/>
+		<input type="checkbox" name="send" /> Send Emails<br/>
+		&nbsp;&nbsp;&nbsp; Recipients: <input type="text" name="addresses" /><br/>
+		<input type="submit" name="submit" value="Submit" />
 	</form>
-	<br/><br/>
-	<h3><a href="<%=reportUrl %>">Go to reportage for your App Id.</a></h3>
+	
+	
+	
+	
 </body>
 </html>

@@ -43,6 +43,7 @@ public class SampleConfig {
 		String appId = props.getProperty("appId");
 		String secretKey = props.getProperty("secretKey");
 		String serviceUrl = props.getProperty("serviceUrl");
-		return new ScormEngineService(serviceUrl,appId,secretKey);
+		String origin = props.getProperty("origin");
+		return new ScormEngineService(serviceUrl,appId,secretKey,origin);
 	}
 }
